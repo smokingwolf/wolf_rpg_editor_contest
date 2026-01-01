@@ -33,6 +33,77 @@
   border-radius:16px;
   max-width:120px;
 }
+
+
+
+
+
+.ss-container{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding-left:10px;
+}
+
+.ss-card{
+  width: 560px;
+  border-radius: 9px 9px 9px 9px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  background: #ffffff;
+  position: relative;
+  flex-shrink: 0;
+  align-self: flex-start; 
+  border: 1px solid #999;
+  text-align:center;
+}
+
+
+
+/* 切り替えスクリーンショット用 */
+.screenshot-wrapper{
+  position: relative;
+  height: 140px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.screenshot-wrapper img.screenshot{
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+  transition: opacity 0.2s ease-in-out;
+  opacity: 0;
+  z-index: 1;
+}
+
+.screenshot-wrapper img.active {
+  opacity: 1;
+}
+
+
+
+/* インジケーター用 */
+.screenshot-wrapper{
+  position: relative; /* 絶対配置の基準に */
+}
+.screenshot-indicator{
+  position: absolute;
+  bottom: 4px; right: 4px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 8px;
+  padding: 2px 4px;
+  border-radius: 7px;
+  line-height: 1;
+  white-space: nowrap;
+  z-index: 3;           
+  pointer-events: none;  
+}
+
 -->
 </style>
 
@@ -83,7 +154,7 @@
 </DIV>
 
 <DIV ID="middle">
-　このサイトは『WOLF RPGエディターコンテスト(ウディコン)』の記録が長く残ることを願い、創作の歴史を振り返るために作られたアーカイブページです。<BR>
+　このサイトは『WOLF RPGエディターコンテスト(ウディコン)』の記録が長く残ることを願って作られたアーカイブページです。<BR>
 <div id="wodicon-status">　</div>
 
 【最終更新】 <B>2025-08-27</B> : 第17回コンテスト結果発表を追加しました。<BR>
@@ -92,6 +163,19 @@
   　<span style="font-size : 80%;">ページ内リンク</span>　<a href="#first" class="g">ウディコンとは？</a> / <a href="#guide" class="g">ご案内</a> / <a href="#results" class="g">各年の結果発表</a> / <a href="#exp" class="g">体験コーナー</a> / <a href="#thanks" class="g">運営からの感謝の言葉</a><br>
   <br>
   <H2 id="first"><a id="first"></a>◆ WOLF RPGエディターコンテスト（ウディコン）とは？</H2>
+  
+
+  <div class="ss-card" style="margin-top:0px;margin-left:20px;">
+    <div class="screenshot-wrapper" onclick="advanceScreenshot(this)" style="border-bottom-left-radius:0px;border-bottom-right-radius:0px;">
+      <img class="screenshot active" src="image/wodicon02_ss.jpg" alt="SS1">
+      <img class="screenshot" src="image/wodicon04_ss.jpg" alt="SS2">
+      <img class="screenshot" src="image/wodicon08_ss.jpg" alt="SS3">
+      <img class="screenshot" src="image/wodicon13_ss.jpg" alt="SS4">
+      <img class="screenshot" src="image/wodicon16_ss.jpg" alt="SS5">
+      <div class="screenshot-indicator"></div>
+    </div>
+  </div>
+
   <br>
   　『ウディコン』は、Windows用ソフトウェアである『WOLF RPGエディター（ウディタ）』製のゲームを対象にした年一回開催のコンテストです。<BR>
   　主催はWOLF RPGエディターの開発者、SmokingWOLF（スモーキングウルフ）です。<BR>
@@ -472,6 +556,85 @@
 </script>
 
 
+<script>
+// スクリーンショット自動切り替え
+window.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.screenshot-wrapper').forEach(wrapper => {
+    // ● 各 wrapper に独自の intervalId を持たせる
+    wrapper._intervalId = setInterval(() => advanceScreenshot(wrapper), 2000);
+
+    // ● マウスが乗ったらタイマー停止
+    wrapper.addEventListener('mouseenter', () => {
+      clearInterval(wrapper._intervalId);
+    });
+    // ● マウスが離れたらタイマー再開
+    wrapper.addEventListener('mouseleave', () => {
+      // 念のため既存タイマーをクリア
+      clearInterval(wrapper._intervalId);
+      // 新しく再スタート
+      wrapper._intervalId = setInterval(() => advanceScreenshot(wrapper), 2000);
+    });
+
+    // ● 初回インジケーター更新
+    const indicator = wrapper.querySelector('.screenshot-indicator');
+    updateIndicator(wrapper, indicator);
+  });
+});
+
+function resetScreenshotInterval() {
+  clearInterval(screenshotInterval);
+  screenshotInterval = setInterval(changeAllScreenshots, 2000);
+}
+
+// スクリーンショットを次に切り替える関数（クリック時）
+// 初期化：ページ読み込み時に全 wrappers にインジケーター作成＆１回目表示
+window.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.screenshot-wrapper').forEach(wrapper => {
+    // indicator要素を確実に取得
+    const indicator = wrapper.querySelector('.screenshot-indicator');
+    updateIndicator(wrapper, indicator);
+  });
+});
+
+// advanceScreenshotの最後に indicator更新を入れる
+function advanceScreenshot(wrapper) {
+  const imgs = wrapper.querySelectorAll('img.screenshot');
+  let index = [...imgs].findIndex(img => img.classList.contains('active'));
+  imgs[index].classList.remove('active');
+  const nextIndex = (index + 1) % imgs.length;
+  imgs[nextIndex].classList.add('active');
+
+  // インジケーター更新
+  const indicator = wrapper.querySelector('.screenshot-indicator');
+  updateIndicator(wrapper, indicator);
+
+  // クリックや自動切り替え時にも “独自タイマー” をリスタートさせたい場合は以下を追加
+  if (!wrapper.matches(':hover')) {
+    clearInterval(wrapper._intervalId);
+    wrapper._intervalId = setInterval(() => advanceScreenshot(wrapper), 2000);
+  }
+  // グローバルリセットは不要なのでコメントアウト or 削除
+  // resetScreenshotInterval();
+}
+
+// インジケーター更新関数
+function updateIndicator(wrapper, indicator) {
+  const count = wrapper.querySelectorAll('img.screenshot').length;
+  // アクティブなインデックスを取得
+  const imgs = wrapper.querySelectorAll('img.screenshot');
+  const activeIndex = [...imgs].findIndex(img =>
+    img.classList.contains('active')
+  );
+
+  // ●○○○ 文字列を作成
+  let dots = '';
+  for (let i = 0; i < count; i++) {
+    dots += i === activeIndex ? '◆' : '○';
+  }
+  indicator.textContent = dots;
+}
+
+</script>
 
 
 
